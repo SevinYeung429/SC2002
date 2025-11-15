@@ -1,0 +1,10 @@
+ID,Name,Email,Type,Extra1,Extra2,Approved
+1,1,1,CompanyRep,1,1,approved
+tan002,Mr. Tan Boon Kiat,tan002@ntu.edu.sg,Staff,Career Center Staff,CCDS
+U2310001A,Tan Wei Ling,tan001@e.ntu.edu.sg,Student,Computer Science,Year 2
+U2310002B,Ng Jia Hao,ng002@e.ntu.edu.sg,Student,Data Science & AI,Year 3
+U2310003C,Lim Yi Xuan,lim003@e.ntu.edu.sg,Student,Computer Engineering,Year 4
+U2310004D,Chong Zhi Hao,chong004@e.ntu.edu.sg,Student,Information Engineering & Media,Year 1
+U2310005E,Wong Shu Hui,wong005@e.ntu.edu.sg,Student,Computer Science,Year 3
+lee003,Ms. Lee Mei Ling,lee003@ntu.edu.sg,Staff,Career Center Staff,CCDS
+sng001,Dr. Sng Hui Lin,sng001@ntu.edu.sg,Staff,Career Center Staff,CCDS
