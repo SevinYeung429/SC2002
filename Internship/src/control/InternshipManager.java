@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class InternshipManager {
+public class InternshipManager implements IInternshipService {
     private List<Internship> internships;
-    private List<WithdrawalRequest> withdrawalRequests; // 待审批的撤回请求
+    private List<WithdrawalRequest> withdrawalRequests;
     private int nextInternshipId;
 
     public InternshipManager() {
@@ -182,8 +182,4 @@ public class InternshipManager {
             }
         }
     }
-
-
-
-
 }

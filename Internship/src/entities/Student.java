@@ -1,4 +1,11 @@
 package entities;
+
+import boundary.StudentUI;
+import control.InternshipManager;
+import control.UserManager;
+
+import java.util.Scanner;
+
 public class Student extends User {
     private int year;
     private String major;
@@ -39,4 +46,9 @@ public class Student extends User {
                 ", Year=" + year + ", Major=" + major +
                 ", Email=" + email + ", AcceptedInternshipID=" + acceptedInternshipId + "]";
     }
+    @Override
+    public void showMenu(UserManager um, InternshipManager im, Scanner sc) {
+        new StudentUI(um, im, sc).studentMenu(this);
+    }
+
 }

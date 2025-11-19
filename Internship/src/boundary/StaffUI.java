@@ -1,7 +1,7 @@
 package boundary;
 
-import control.InternshipManager;
-import control.UserManager;
+import control.IInternshipService;
+import control.IUserService;
 import entities.*;
 
 import java.util.ArrayList;
@@ -9,21 +9,23 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
-public class StaffUI {
-    private final UserManager userManager;
-    private final InternshipManager internshipManager;
+public class StaffUI implements IStaffUI {
+
+    private final IUserService userService;
+    private final IInternshipService internshipService;
     private final Scanner sc;
 
     private InternshipStatus lastStatusFilter = null;
     private InternshipLevel lastLevelFilter = null;
     private String lastMajorFilter = null;
 
-    public StaffUI(UserManager um, InternshipManager im, Scanner sc) {
-        this.userManager = um;
-        this.internshipManager = im;
+    public StaffUI(IUserService userService, IInternshipService internshipService, Scanner sc) {
+        this.userService = userService;
+        this.internshipService = internshipService;
         this.sc = sc;
     }
 
+    @Override
     public void staffMenu(CareerCenterStaff staff) {
         boolean logout = false;
         while (!logout) {
@@ -67,7 +69,7 @@ public class StaffUI {
 
     private void approveCompanyAccounts() {
         try {
-            var pending = userManager.getPendingCompanyReps();
+            var pending = userService.getPendingCompanyReps();
             if (pending.isEmpty()) {
                 System.out.println("No pending company representative accounts.");
                 return;
@@ -85,7 +87,7 @@ public class StaffUI {
                 rep.setApproved(true);
                 System.out.println("Account approved. The representative may now log in.");
             } else {
-                userManager.removeUser(rep.getId());
+                userService.removeUser(rep.getId());
                 System.out.println("Account rejected and removed.");
             }
         } catch (NumberFormatException e) {
@@ -97,7 +99,7 @@ public class StaffUI {
 
     private void approveInternships() {
         try {
-            var pending = internshipManager.getAllInternships().stream()
+            var pending = internshipService.getAllInternships().stream()
                     .filter(i -> i.getStatus() == InternshipStatus.PENDING)
                     .toList();
             if (pending.isEmpty()) {
@@ -106,7 +108,7 @@ public class StaffUI {
             }
             for (int i = 0; i < pending.size(); i++) {
                 Internship it = pending.get(i);
-                System.out.println((i + 1) + ". " + it.getTitle() + " (" + it.getCompanyName() + ")");
+                System.out.println((i + 1) + ". " + it.getTitle() + " (" + it.getCompanyName() + ","+it.getDescription()+ ")");
             }
             System.out.print("Select posting (0 to cancel): ");
             int ch = Integer.parseInt(sc.nextLine());
@@ -114,7 +116,7 @@ public class StaffUI {
             Internship internship = pending.get(ch - 1);
             System.out.print("Approve this internship? (y/n): ");
             boolean approve = sc.nextLine().trim().toLowerCase().startsWith("y");
-            internshipManager.reviewInternshipPosting(internship, approve);
+            internshipService.reviewInternshipPosting(internship, approve);
             System.out.println(approve ? "Posting approved and now visible to students." : "Posting rejected.");
         } catch (NumberFormatException e) {
             System.out.println("Invalid input. Please enter a number.");
@@ -125,7 +127,7 @@ public class StaffUI {
 
     private void reviewWithdrawals() {
         try {
-            var reqs = internshipManager.getPendingWithdrawalRequests();
+            var reqs = internshipService.getPendingWithdrawalRequests();
             if (reqs.isEmpty()) {
                 System.out.println("No withdrawal requests pending.");
                 return;
@@ -142,7 +144,7 @@ public class StaffUI {
             WithdrawalRequest req = reqs.get(ch - 1);
             System.out.print("Approve this withdrawal? (y/n): ");
             boolean approve = sc.nextLine().trim().toLowerCase().startsWith("y");
-            internshipManager.processWithdrawalRequest(req, approve);
+            internshipService.processWithdrawalRequest(req, approve);
             System.out.println(approve ? "Withdrawal approved." : "Withdrawal rejected.");
         } catch (NumberFormatException e) {
             System.out.println("Invalid input. Please enter a number.");
@@ -174,7 +176,7 @@ public class StaffUI {
                 catch (Exception e) { lastLevelFilter = null; }
             }
 
-            List<Internship> list = new ArrayList<>(internshipManager.getAllInternships());
+            List<Internship> list = new ArrayList<>(internshipService.getAllInternships());
             list.sort(Comparator.comparing(Internship::getTitle, String.CASE_INSENSITIVE_ORDER));
             list.removeIf(it ->
                     (lastStatusFilter != null && it.getStatus() != lastStatusFilter) ||
@@ -192,6 +194,7 @@ public class StaffUI {
                 int totalApps = it.getApplications().size();
                 int confirmed = it.countApplicationsByStatus(ApplicationStatus.CONFIRMED);
                 System.out.println(it.getTitle() + " | " + it.getCompanyName() +
+                        " | Description: " + it.getDescription() +
                         " | Status: " + it.getStatus() +
                         " | Level: " + it.getLevel() +
                         " | Major: " + it.getPreferredMajor() +
@@ -203,3 +206,4 @@ public class StaffUI {
         }
     }
 }
+

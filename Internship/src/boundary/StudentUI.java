@@ -1,7 +1,7 @@
 package boundary;
 
-import control.InternshipManager;
-import control.UserManager;
+import control.IInternshipService;
+import control.IUserService;
 import entities.*;
 
 import java.time.LocalDate;
@@ -12,9 +12,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
-public class StudentUI {
-    private final UserManager userManager;
-    private final InternshipManager internshipManager;
+public class StudentUI implements IStudentUI {
+
+    private final IUserService userService;
+    private final IInternshipService internshipService;
     private final Scanner sc;
 
     private InternshipStatus lastStatusFilter = null;
@@ -22,12 +23,13 @@ public class StudentUI {
     private String lastMajorFilter = null;
     private LocalDate lastClosingDateFilter = null;
 
-    public StudentUI(UserManager um, InternshipManager im, Scanner sc) {
-        this.userManager = um;
-        this.internshipManager = im;
+    public StudentUI(IUserService userService, IInternshipService internshipService, Scanner sc) {
+        this.userService = userService;
+        this.internshipService = internshipService;
         this.sc = sc;
     }
 
+    @Override
     public void studentMenu(Student student) {
         boolean logout = false;
         while (!logout) {
@@ -87,7 +89,7 @@ public class StudentUI {
                 catch (DateTimeParseException e) { lastClosingDateFilter = null; }
             }
 
-            List<Internship> list = new ArrayList<>(internshipManager.getAllInternships());
+            List<Internship> list = new ArrayList<>(internshipService.getAllInternships());
             list.removeIf(it ->
                     it.getStatus() != InternshipStatus.APPROVED ||
                             !it.isVisible() ||
@@ -108,6 +110,7 @@ public class StudentUI {
 
             for (Internship it : list) {
                 System.out.println(it.getTitle() + " | " + it.getCompanyName() +
+                        " | Description: " + it.getDescription()+
                         " | Level: " + it.getLevel() +
                         " | Major: " + it.getPreferredMajor() +
                         " | Closes: " + it.getClosingDate());
@@ -121,14 +124,35 @@ public class StudentUI {
         try {
             System.out.println("-- My Applications --");
             boolean found = false;
-            for (Internship it : internshipManager.getAllInternships()) {
-                ApplicationStatus st = it.getApplications().get(s.getId());
-                if (st != null) {
+
+            for (Internship it : internshipService.getAllInternships()) {
+                ApplicationStatus appStatus = it.getApplications().get(s.getId());
+
+                if (appStatus != null) {
                     found = true;
-                    System.out.println(it.getTitle() + " | " + it.getCompanyName() + " | Status: " + st);
+
+                    InternshipStatus internshipStatus = it.getInternshipStatus();
+
+                    String statusDisplay;
+
+                    if (appStatus == ApplicationStatus.CONFIRMED) {
+                        statusDisplay = "SUCCESSFUL";
+
+                    } else if (internshipStatus == InternshipStatus.FILLED||appStatus == ApplicationStatus.REJECTED) {
+                        statusDisplay = "UNSUCCESSFUL";
+
+                    } else {
+                        statusDisplay = "PENDING";
+                    }
+
+                    System.out.println(it.getTitle() + " | " + it.getCompanyName() + " | Status: " + statusDisplay);
                 }
             }
-            if (!found) System.out.println("No applications found.");
+
+            if (!found) {
+                System.out.println("No applications found.");
+            }
+
         } catch (Exception e) {
             System.out.println("Error while listing applications: " + e.getMessage());
         }
@@ -137,25 +161,31 @@ public class StudentUI {
     private void applyToInternship(Student s) {
         try {
             List<Internship> openList = new ArrayList<>();
-            for (Internship it : internshipManager.getAllInternships()) {
+            for (Internship it : internshipService.getAllInternships()) {
                 if (it.isOpenForApplication(s)) openList.add(it);
             }
+
             openList.sort(Comparator.comparing(Internship::getTitle, String.CASE_INSENSITIVE_ORDER));
+
             if (openList.isEmpty()) {
                 System.out.println("No internships available for application.");
                 return;
             }
+
             for (int i = 0; i < openList.size(); i++) {
                 System.out.println((i + 1) + ". " + openList.get(i).getTitle());
             }
             System.out.print("Choose internship to apply: ");
             int ch = Integer.parseInt(sc.nextLine());
             if (ch < 1 || ch > openList.size()) return;
+
             Internship selected = openList.get(ch - 1);
-            if (internshipManager.applyForInternship(s, selected))
+
+            if (internshipService.applyForInternship(s, selected))
                 System.out.println("Application submitted.");
             else
                 System.out.println("Application failed (limit reached or already applied).");
+
         } catch (NumberFormatException e) {
             System.out.println("Invalid input. Please enter a number.");
         } catch (Exception e) {
@@ -166,24 +196,35 @@ public class StudentUI {
     private void withdrawApplication(Student s) {
         try {
             List<Internship> withdrawable = new ArrayList<>();
-            for (Internship it : internshipManager.getAllInternships()) {
+
+            for (Internship it : internshipService.getAllInternships()) {
                 ApplicationStatus st = it.getApplications().get(s.getId());
-                if (st == ApplicationStatus.APPLIED || st == ApplicationStatus.OFFERED || st == ApplicationStatus.CONFIRMED)
+                if (st == ApplicationStatus.APPLIED ||
+                        st == ApplicationStatus.OFFERED ||
+                        st == ApplicationStatus.CONFIRMED)
+                {
                     withdrawable.add(it);
+                }
             }
+
             if (withdrawable.isEmpty()) {
                 System.out.println("No applications available to withdraw.");
                 return;
             }
+
             for (int i = 0; i < withdrawable.size(); i++)
                 System.out.println((i + 1) + ". " + withdrawable.get(i).getTitle());
+
             System.out.print("Choose internship to withdraw: ");
             int ch = Integer.parseInt(sc.nextLine());
             if (ch < 1 || ch > withdrawable.size()) return;
+
             Internship selected = withdrawable.get(ch - 1);
-            WithdrawalRequest req = internshipManager.requestWithdrawal(s, selected);
+            WithdrawalRequest req = internshipService.requestWithdrawal(s, selected);
+
             if (req == null) System.out.println("Withdrawal request failed or already pending.");
             else System.out.println("Withdrawal request submitted. Awaiting staff approval.");
+
         } catch (NumberFormatException e) {
             System.out.println("Invalid input. Please enter a number.");
         } catch (Exception e) {
@@ -194,14 +235,17 @@ public class StudentUI {
     private void acceptOffer(Student s) {
         try {
             List<Internship> offerList = new ArrayList<>();
-            for (Internship it : internshipManager.getAllInternships()) {
+
+            for (Internship it : internshipService.getAllInternships()) {
                 ApplicationStatus st = it.getApplications().get(s.getId());
                 if (st == ApplicationStatus.OFFERED) offerList.add(it);
             }
+
             if (offerList.isEmpty()) {
                 System.out.println("No offers available to accept.");
                 return;
             }
+
             System.out.println("-- Offers Available --");
             for (int i = 0; i < offerList.size(); i++) {
                 Internship it = offerList.get(i);
@@ -209,24 +253,29 @@ public class StudentUI {
                         " | Company: " + it.getCompanyName() +
                         " | Level: " + it.getLevel());
             }
+
             System.out.print("Choose offer to accept (0 to cancel): ");
             int ch = Integer.parseInt(sc.nextLine());
             if (ch < 1 || ch > offerList.size()) {
                 System.out.println("Cancelled.");
                 return;
             }
+
             Internship chosen = offerList.get(ch - 1);
-            if (internshipManager.acceptOffer(s, chosen)) {
+
+            if (internshipService.acceptOffer(s, chosen)) {
                 System.out.println("Offer accepted successfully for " + chosen.getTitle());
             } else {
                 System.out.println("Failed to accept offer.");
             }
+
         } catch (NumberFormatException e) {
             System.out.println("Invalid number input.");
         } catch (Exception e) {
             System.out.println("Error while accepting offer: " + e.getMessage());
         }
     }
+
     private void changePassword(User u) {
         try {
             System.out.print("Current password: ");

@@ -1,5 +1,9 @@
 package entities;
+import control.InternshipManager;
+import control.UserManager;
+
 import java.io.Serializable;
+import java.util.Scanner;
 
 public abstract class User implements Serializable {
     private String id;
@@ -36,4 +40,6 @@ public abstract class User implements Serializable {
     public String toString() {
         return "User [ID=" + id + ", Name=" + name + "]";
     }
+
+    public abstract void showMenu(UserManager um, InternshipManager im, Scanner sc);
 }

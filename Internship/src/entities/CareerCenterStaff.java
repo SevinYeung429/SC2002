@@ -1,8 +1,11 @@
 package entities;
-/**
- * CareerCenterStaff user class, extends User.
- * Contains additional attributes for role, department, and email.
- */
+
+import boundary.StaffUI;
+import control.InternshipManager;
+import control.UserManager;
+
+import java.util.Scanner;
+
 public class CareerCenterStaff extends User {
     private String role;
     private String department;
@@ -32,4 +35,9 @@ public class CareerCenterStaff extends User {
         return "CareerCenterStaff [ID=" + getId() + ", Name=" + getName() +
                 ", Role=" + role + ", Department=" + department + ", Email=" + email + "]";
     }
+    @Override
+    public void showMenu(UserManager um, InternshipManager im, Scanner sc) {
+        new StaffUI(um, im, sc).staffMenu(this);
+    }
+
 }

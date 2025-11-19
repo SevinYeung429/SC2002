@@ -6,7 +6,7 @@ import entities.User;
 
 import java.util.*;
 
-public class UserManager {
+public class UserManager implements IUserService {
     private Map<String, User> users;
     private final UserDataHandler dataHandler;
 
@@ -52,4 +52,9 @@ public class UserManager {
     public Collection<User> getAllUsers() {
         return users.values();
     }
+    @Override
+    public User authenticateUser(String id, String password) {
+        return login(id, password);
+    }
+
 }

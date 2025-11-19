@@ -3,6 +3,7 @@ package entities;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Internship {
     private int id;
@@ -39,6 +40,8 @@ public class Internship {
     public String getDescription() { return description; }
     public InternshipLevel getLevel() { return level; }
     public LocalDate getOpeningDate() { return openingDate; }
+    public InternshipStatus getInternshipStatus() {return status;}
+
     public LocalDate getClosingDate() { return closingDate; }
     public InternshipStatus getStatus() { return status; }
     public void setStatus(InternshipStatus status) { this.status = status; }
@@ -63,6 +66,7 @@ public class Internship {
         if (today.isBefore(openingDate) || today.isAfter(closingDate)) return false;
         if (status == InternshipStatus.FILLED) return false;
         if (student.getYear() <= 2 && level != InternshipLevel.BASIC) return false;
+        if (!Objects.equals(student.getMajor().toLowerCase(), prefer_major.toLowerCase())) return false;
         return true;
     }
 
@@ -90,5 +94,7 @@ public class Internship {
                 ", Close Date=" + closingDate +
                 ", Major Pref=" + prefer_major + "]";
     }
+
+
 }
 

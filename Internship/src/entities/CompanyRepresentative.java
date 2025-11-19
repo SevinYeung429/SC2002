@@ -1,11 +1,12 @@
 package entities;
-/**
- * CompanyRepresentative user class, extends User.
- * Contains additional attributes like company name, department, position,
- * email, and approval status for account activation.
- */
+
+import boundary.CompanyRepUI;
+import control.InternshipManager;
+import control.UserManager;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class CompanyRepresentative extends User {
     private String companyName;
@@ -66,5 +67,10 @@ public class CompanyRepresentative extends User {
                 ", Position=" + position + ", Email=" + email +
                 ", Approved=" + isApproved + "]";
     }
+    @Override
+    public void showMenu(UserManager um, InternshipManager im, Scanner sc) {
+        new CompanyRepUI(um, im, sc).repMenu(this);
+    }
+
 }
 

@@ -3,16 +3,10 @@ package boundary;
 import control.InternshipManager;
 import control.UserManager;
 import data.UserDataHandler;
-import entities.CareerCenterStaff;
-import entities.CompanyRepresentative;
-import entities.Student;
-import entities.User;
-
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Current working dir: " + System.getProperty("user.dir"));
 
         UserDataHandler dataHandler = new UserDataHandler();
         UserManager userManager = new UserManager(dataHandler);
@@ -20,8 +14,6 @@ public class Main {
         Scanner sc = new Scanner(System.in);
 
         userManager.loadAllUsers();
-
-        System.out.println("=== Internship Management System ===");
 
         boolean exit = false;
         while (!exit) {
@@ -40,7 +32,6 @@ public class Main {
         }
 
         dataHandler.saveUsersToCSV(userManager);
-        System.out.println("System exited. Goodbye!");
     }
 
     private static void login(UserManager userManager, InternshipManager internshipManager, Scanner sc) {
@@ -49,18 +40,13 @@ public class Main {
         System.out.print("Enter Password: ");
         String pw = sc.nextLine().trim();
 
-        User user = userManager.login(id, pw);
+        entities.User user = userManager.login(id, pw);
         if (user == null) {
-            System.out.println("Login failed (invalid credentials or not approved).");
+            System.out.println("Login failed.");
             return;
         }
 
         System.out.println("Welcome, " + user.getName() + "!");
-        if (user instanceof Student s)
-            new StudentUI(userManager, internshipManager, sc).studentMenu(s);
-        else if (user instanceof CompanyRepresentative rep)
-            new CompanyRepUI(userManager, internshipManager, sc).companyRepMenu(rep);
-        else if (user instanceof CareerCenterStaff st)
-            new StaffUI(userManager, internshipManager, sc).staffMenu(st);
+        user.showMenu(userManager, internshipManager, sc);
     }
 }
